@@ -1,9 +1,7 @@
 version: "3"
 services:
   proxy:
-#    image: zterry95/shadowsocks-client-go
-    build:
-      context: ./
+    image: zterry95/pgfast-v2ray-auto
     container_name: v2ray
 #    volumes:
 #      - ./pgfast:/go/pgfast
