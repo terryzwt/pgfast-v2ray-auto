@@ -11,7 +11,7 @@
 git clone git@github.com:terryzwt/pgfast-v2ray-auto.git
 cp docker-compose-sample.yml docker-compose.yml
 ## edit the PGFAST_SUBSCRIBE_URL and INTERVAL
-vi pgconfig.toml #里面有两个参数Subscribe_url和Password,可以在https://www.pgfastss.net上找到。需要的是付费用户才行。
+#参数PGFAST_SUBSCRIBE_URL可以在https://www.pgfastss.net上找到。需要的是付费用户才行。
 docker-compose up -d
 ```
 
