@@ -37,7 +37,8 @@ var default_config = []byte(`
     "servers": [
       {
         "address": "https://1.1.1.1/dns-query",
-        "domains": ["geosite:geolocation-!cn", "geosite:google@cn"]
+        "domains": ["geosite:geolocation-!cn", "geosite:google@cn"],
+        "expectIPs": ["geoip:!cn"],
       },
       "8.8.8.8",
       {
