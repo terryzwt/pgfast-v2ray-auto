@@ -34,17 +34,10 @@ var default_config = []byte(`
     "loglevel": "warning"
   },
   "dns": {
-    "hosts": {
-      "dns.google": "8.8.8.8",
-      "dns.pub": "119.29.29.29",
-      "dns.alidns.com": "223.5.5.5",
-      "geosite:category-ads-all": "127.0.0.1"
-    },
     "servers": [
       {
         "address": "https://1.1.1.1/dns-query",
-        "domains": ["geosite:geolocation-!cn", "geosite:google@cn"],
-        "expectIPs": ["geoip:!cn"]
+        "domains": ["geosite:geolocation-!cn", "geosite:google@cn"]
       },
       "8.8.8.8",
       {
