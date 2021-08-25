@@ -30,44 +30,67 @@ type vmessConfigUser struct {
 
 var default_config = []byte(`
 {
+  "log": {
+    "loglevel": "warning"
+  },
+  "dns": {
+    "hosts": {
+      "dns.google": "8.8.8.8",
+      "dns.pub": "119.29.29.29",
+      "dns.alidns.com": "223.5.5.5",
+      "geosite:category-ads-all": "127.0.0.1"
+    },
+    "servers": [
+      {
+        "address": "https://1.1.1.1/dns-query",
+        "domains": ["geosite:geolocation-!cn", "geosite:google@cn"],
+        "expectIPs": ["geoip:!cn"]
+      },
+      "8.8.8.8",
+      {
+        "address": "114.114.114.114",
+        "port": 53,
+        "domains": [
+          "geosite:cn",
+          "geosite:icloud",
+          "geosite:category-games@cn"
+        ],
+        "expectIPs": ["geoip:cn"],
+        "skipFallback": true
+      },
+      {
+        "address": "localhost",
+        "skipFallback": true
+      }
+    ]
+  },
   "inbounds": [
     {
-      "listen": "0.0.0.0",
-      "port": "4080",
       "protocol": "socks",
+      "listen": "0.0.0.0",
+      "port": 1080,
+      "tag": "Socks-In",
       "settings": {
-        "auth": "noauth",
-        "udp": false
+        "ip": "127.0.0.1",
+        "udp": true,
+        "auth": "noauth"
       },
       "sniffing": {
-        "destOverride": [
-          "tls",
-          "http"
-        ],
-        "enabled": true
+        "enabled": true,
+        "destOverride": ["http", "tls"]
       }
     },
     {
-      "listen": "0.0.0.0",
-      "port": "5080",
       "protocol": "http",
-      "settings": {
-        "timeout": 360
-      },
+      "listen": "0.0.0.0",
+      "port": 2080,
+      "tag": "Http-In",
       "sniffing": {
-        "destOverride": [
-          "tls",
-          "http"
-        ],
-        "enabled": true
+        "enabled": true,
+        "destOverride": ["http", "tls"]
       }
     }
   ],
-  "log": {
-    "access": "",
-    "error": "Fatal",
-    "loglevel": "info"
-  },
   "outbounds": [
     {
       "mux": {
@@ -94,44 +117,86 @@ var default_config = []byte(`
       "tag": "proxy"
     },
     {
+      "protocol": "dns",
+      "tag": "Dns-Out"
+    },
+    {
       "protocol": "freedom",
+      "tag": "Direct",
       "settings": {
-        "domainStrategy": "UseIP",
-        "redirect": "",
-        "userLevel": 0
-      },
-      "tag": "direct"
+        "domainStrategy": "UseIPv4"
+      }
     },
     {
       "protocol": "blackhole",
+      "tag": "Reject",
       "settings": {
         "response": {
-          "type": "none"
+          "type": "http"
         }
-      },
-      "tag": "block"
+      }
     }
   ],
   "routing": {
-    "settings": {
-      "domainstrategy": "IPIfNonMatch",
-      "rules": [
-        {
-          "domain": [
-            "geosite:cn"
-          ],
-          "outboundTag": "direct",
-          "type": "field"
-        },
-        {
-          "ip": [
-            "geoip:cn"
-          ],
-          "outboundTag": "direct",
-          "type": "field"
-        }
-      ]
-    }
+    "domainStrategy": "IPIfNonMatch",
+    "domainMatcher": "mph",
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "Direct",
+        "protocol": ["bittorrent"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Dns-Out",
+        "inboundTag": ["Socks-In", "Http-In"],
+        "network": "udp",
+        "port": 53
+      },
+      {
+        "type": "field",
+        "outboundTag": "Reject",
+        "domain": ["geosite:category-ads-all"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Proxy",
+        "domain": [
+          "full:www.icloud.com",
+          "domain:icloud-content.com",
+          "geosite:google"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Direct",
+        "domain": [
+          "geosite:tld-cn",
+          "geosite:icloud",
+          "geosite:category-games@cn"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Proxy",
+        "domain": ["geosite:geolocation-!cn"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Direct",
+        "domain": ["geosite:cn", "geosite:private"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Direct",
+        "ip": ["geoip:cn", "geoip:private"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "Proxy",
+        "network": "tcp,udp"
+      }
+    ]
   }
 }`)
 
