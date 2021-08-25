@@ -17,5 +17,6 @@ RUN apk add --no-cache git supervisor && \
 
 EXPOSE 4080
 EXPOSE 5080
+WORKDIR /go
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
