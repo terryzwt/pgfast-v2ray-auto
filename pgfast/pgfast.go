@@ -61,7 +61,7 @@ var default_config = []byte(`
     {
       "protocol": "socks",
       "listen": "0.0.0.0",
-      "port": 1080,
+      "port": 4080,
       "tag": "Socks-In",
       "settings": {
         "ip": "127.0.0.1",
@@ -76,7 +76,7 @@ var default_config = []byte(`
     {
       "protocol": "http",
       "listen": "0.0.0.0",
-      "port": 2080,
+      "port": 5080,
       "tag": "Http-In",
       "sniffing": {
         "enabled": true,

@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine
+FROM alpine
 MAINTAINER zterry <zterry@qq.com>
 ENV V2RAY_VERSION "4.31.0"
 ADD supervisord.conf /etc/supervisord.conf
