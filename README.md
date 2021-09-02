@@ -14,6 +14,12 @@ cp docker-compose-sample.yml docker-compose.yml
 #参数PGFAST_SUBSCRIBE_URL可以在https://www.pgfastss.net上找到。需要的是付费用户才行。
 docker-compose up -d
 ```
+## 参数
+|参数|说明|
+|:--|:--|
+|PGFAST_SUBSCRIBE_URL|[pgfast](https://www.pgfastss.net/)后台的订阅URL，需要付费用户订阅后才可获取|
+|INTERVAL|定时更新的周期，单位为分钟。|
+|PREFER_BY_NOTE|指定特定host，基于备注使用contains来匹配|
 
 ## 其他
 * 构建linux程序

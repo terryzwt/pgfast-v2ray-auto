@@ -11,6 +11,7 @@ import (
 	"github.com/tidwall/gjson"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -195,8 +196,14 @@ var default_config = []byte(`
 }`)
 
 func main() {
+	//os.Setenv("PGFAST_SUBSCRIBE_URL", "http://13.250.40.244/sub_v2ray.php?i=zterry&t=2cc0ee2e7eb2b7ca2974dd0559a4631a")
+	viper.SetDefault("interval", 18000)
+	viper.SetDefault("pgfast_subscribe_url", os.Getenv("PGFAST_SUBSCRIBE_URL"))
+	viper.SetDefault("prefer_by_note", "美国")
+
 	viper.BindEnv("pgfast_subscribe_url")
 	viper.BindEnv("interval")
+	viper.BindEnv("prefer_by_note")
 
 	subUrl := viper.GetString("pgfast_subscribe_url")
 	interval := viper.GetInt32("interval")
@@ -247,6 +254,8 @@ func getVmessConfigFromSubscribe(link string) []vmessConfig {
 		log.Panic(err) //请求错误, 不应该继续向下执行, panic掉
 	}
 	defer resp.Body.Close()
+	preferByNote := viper.GetString("prefer_by_note")
+	//fmt.Println(preferByNote)
 	//将数据放入一个 bytes.Buffer 中, 方便操作
 	resBuffer := new(bytes.Buffer)
 	_, _ = resBuffer.ReadFrom(base64.NewDecoder(base64.RawURLEncoding, resp.Body))
@@ -256,8 +265,13 @@ func getVmessConfigFromSubscribe(link string) []vmessConfig {
 		if strings.HasPrefix(line, "vmess://") {
 			vmessConfigByte, _ := base64.StdEncoding.DecodeString(line[8:])
 			vmessConfigString := string(vmessConfigByte)
-			//fmt.Println(vmessConfigString)
 
+			note := gjson.Get(vmessConfigString, "ps").String()
+			//prefer note
+			if !strings.Contains(note, preferByNote) {
+				continue
+			}
+			fmt.Println(vmessConfigString)
 			ConfigUser := vmessConfigUser{
 				alterId:  gjson.Get(vmessConfigString, "aid").Int(),
 				Id:       gjson.Get(vmessConfigString, "id").String(),
