@@ -9,27 +9,17 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
 
-type vmessConfig struct {
-	Address string            `json:"address"`
-	Port    int64             `json:"port"`
-	Users   []vmessConfigUser `json:"users"`
-}
-type vmessConfigUser struct {
-	Id       string `json:"id"`
-	alterId  int64  `json:"alterId"`
-	Level    int64  `json:"level"`
-	Security string `json:"security"`
-}
-
-var default_config = []byte(`
+var defaultConfig = []byte(`
 {
   "log": {
     "loglevel": "warning"
@@ -39,7 +29,7 @@ var default_config = []byte(`
       {
         "address": "https://1.1.1.1/dns-query",
         "domains": ["geosite:geolocation-!cn", "geosite:google@cn"],
-        "expectIPs": ["geoip:!cn"],
+        "expectIPs": ["geoip:!cn"]
       },
       "8.8.8.8",
       {
@@ -195,18 +185,31 @@ var default_config = []byte(`
   }
 }`)
 
+type vmessConfig struct {
+	Address string            `json:"address"`
+	Port    int64             `json:"port"`
+	Users   []vmessConfigUser `json:"users"`
+}
+type vmessConfigUser struct {
+	Id       string `json:"id"`
+	alterId  int64  `json:"alterId"`
+	Level    int64  `json:"level"`
+	Security string `json:"security"`
+}
+
 func main() {
-	//os.Setenv("PGFAST_SUBSCRIBE_URL", "http://13.250.40.244/sub_v2ray.php?i=zterry&t=2cc0ee2e7eb2b7ca2974dd0559a4631a")
-	viper.SetDefault("interval", 18000)
-	viper.SetDefault("pgfast_subscribe_url", os.Getenv("PGFAST_SUBSCRIBE_URL"))
-	viper.SetDefault("prefer_by_note", "美国")
+	os.Setenv("http_proxy", "")
+	os.Setenv("https_proxy", "")
+	//viper.SetDefault("interval", 18000)
+	//viper.SetDefault("pgfast_subscribe_url", os.Getenv("PGFAST_SUBSCRIBE_URL"))
+	//viper.SetDefault("prefer_by_note", "美国")
 
-	viper.BindEnv("pgfast_subscribe_url")
-	viper.BindEnv("interval")
-	viper.BindEnv("prefer_by_note")
+	//viper.BindEnv("pgfast_subscribe_url")
+	//viper.BindEnv("interval")
+	//viper.BindEnv("prefer_by_note")
 
-	subUrl := viper.GetString("pgfast_subscribe_url")
-	interval := viper.GetInt32("interval")
+	subUrl := os.Getenv("PGFAST_SUBSCRIBE_URL")
+	interval, _ := strconv.Atoi(os.Getenv("INTERVAL"))
 
 	if len(subUrl) == 0 {
 		log.Fatalf("SubScribe Url not defined")
@@ -214,20 +217,6 @@ func main() {
 
 	vmessConfig := getVmessConfigFromSubscribe(subUrl)
 	generatePgfastConfig(vmessConfig)
-
-	//minitoring config file change and auto restart v2ray
-	viper.SetConfigFile("./v2ray-config.json")
-	viper.ReadInConfig()
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("Config file changed:", e.Name)
-		cmd := exec.Command("supervisorctl", "restart", "v2ray")
-		data, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Fatalf("failed to call CombinedOutput(): %v", err)
-		}
-		log.Printf("output: %s", data)
-	})
 
 	//update
 	ticker := time.NewTicker(time.Minute * time.Duration(interval))
@@ -239,14 +228,32 @@ func main() {
 
 func generatePgfastConfig(vmessConfig []vmessConfig) {
 	viper.SetConfigFile("./v2ray-config.json")
+
 	configBuffer, _ := json.Marshal(vmessConfig)
-	processConfig, _ := jsonparser.Set(default_config, configBuffer, "outbounds", "[0]", "settings", "vnext")
-	//fmt.Println(string(processConfig))
-	viper.ReadConfig(bytes.NewBuffer(processConfig))
-	viper.WriteConfig()
+	processConfig, _ := jsonparser.Set(defaultConfig, configBuffer, "outbounds", "[0]", "settings", "vnext")
+
+	//fullConfigBuffer := bytes.NewBuffer(processConfig)
+	//fmt.Println(fullConfigBuffer)
+	//viper.ReadConfig(fullConfigBuffer)
+	//viper.WriteConfigAs("./v2ray-config.json")
+
+	err := ioutil.WriteFile("./v2ray-config.json", processConfig, 0644)
+	if err != nil {
+		panic(err)
+	}
 
 	t := time.Now()
 	fmt.Println(t.Format("2006-01-02 15:04:05"), ": generate config file...")
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("Config file changed:", e.Name)
+		cmd := exec.Command("supervisorctl", "restart", "v2ray")
+		data, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("failed to call CombinedOutput(): %v", err)
+		}
+		log.Printf("output: %s", data)
+	})
 }
 func getVmessConfigFromSubscribe(link string) []vmessConfig {
 	resp, err := http.Get(link)
@@ -254,7 +261,7 @@ func getVmessConfigFromSubscribe(link string) []vmessConfig {
 		log.Panic(err) //请求错误, 不应该继续向下执行, panic掉
 	}
 	defer resp.Body.Close()
-	preferByNote := viper.GetString("prefer_by_note")
+	preferByNote := os.Getenv("PREFER_BY_NOTE")
 	//fmt.Println(preferByNote)
 	//将数据放入一个 bytes.Buffer 中, 方便操作
 	resBuffer := new(bytes.Buffer)
@@ -271,7 +278,7 @@ func getVmessConfigFromSubscribe(link string) []vmessConfig {
 			if !strings.Contains(note, preferByNote) {
 				continue
 			}
-			fmt.Println(vmessConfigString)
+
 			ConfigUser := vmessConfigUser{
 				alterId:  gjson.Get(vmessConfigString, "aid").Int(),
 				Id:       gjson.Get(vmessConfigString, "id").String(),
