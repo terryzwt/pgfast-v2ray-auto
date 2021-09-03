@@ -5,10 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/buger/jsonparser"
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,6 +13,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/buger/jsonparser"
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 )
 
 var defaultConfig = []byte(`
@@ -56,7 +57,6 @@ var defaultConfig = []byte(`
       "port": 4080,
       "tag": "Socks-In",
       "settings": {
-        "ip": "127.0.0.1",
         "udp": true,
         "auth": "noauth"
       },
@@ -68,6 +68,9 @@ var defaultConfig = []byte(`
     {
       "protocol": "http",
       "listen": "0.0.0.0",
+      "settings": {
+        "timeout": 360
+      },
       "port": 5080,
       "tag": "Http-In",
       "sniffing": {
