@@ -99,7 +99,7 @@ var defaultConfig = []byte(`
           "path": "/pgf"
         }
       },
-      "tag": "proxy"
+      "tag": "Proxy"
     },
     {
       "protocol": "dns",

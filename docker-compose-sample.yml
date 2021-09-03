@@ -4,10 +4,11 @@ services:
     image: zterry95/pgfast-v2ray-auto
     container_name: v2ray
 #    volumes:
-#      - ./pgfast:/go/pgfast
+#      - ./pgfast/pgfast:/go/pgfast
     environment:
       - PGFAST_SUBSCRIBE_URL=http://0.0.0.0/sub_v2ray.php?i=xxx&t=xxxx
       - INTERVAL=50
+      - PREFER_BY_NOTE=美国
     ports:
       - "4080:4080"
       - "5080:5080"
