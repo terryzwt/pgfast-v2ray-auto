@@ -27,5 +27,6 @@ jobs:
       with:
         push: true
         context: .
+        platforms: linux/amd64,linux/arm64
         file: Dockerfile
         tags: zterry95/pgfast-v2ray-auto
