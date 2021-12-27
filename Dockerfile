@@ -1,6 +1,6 @@
 FROM alpine
 MAINTAINER zterry <zterry@qq.com>
-ENV V2RAY_VERSION "4.43.0"
+ENV V2RAY_VERSION "4.44.0"
 ADD supervisord.conf /etc/supervisord.conf
 ADD pgfast /go/
 
